@@ -67,9 +67,6 @@ module.exports = {
       },
     ],
     'max-params': ['error', 3],
-    // 'etc/no-t': 'error',
-    // 'etc/no-commented-out-code': 'error',
-    // 'etc/throw-error': 'error',
     'spaced-comment': ['error', 'always', { markers: ['/'] }],
     'comma-dangle': ['error', 'only-multiline'],
     'no-unused-vars': [
