@@ -9,6 +9,7 @@
     "prepare": "husky install",
     "cucumber": "node_modules/.bin/cucumber-js ",
     "cu": "npm run cucumber",
+    "cu:focus": "npm run cu -- -- -p focus",
     "prettier": "prettier 'features/**/*.ts'",
     "prettier:fix": "prettier --write 'features/**/*.ts'"
   },
@@ -32,6 +33,7 @@
     "@cucumber/pretty-formatter": "^1.0.0",
     "@playwright/test": "^1.41.2",
     "@types/node": "^20.11.20",
+    "@types/pngjs": "6.0.5",
     "@typescript-eslint/eslint-plugin": "^7.0.2",
     "@typescript-eslint/parser": "^7.0.2",
     "eslint": "^8.57.0",
@@ -61,8 +63,11 @@
     "allowTemplateLiterals": true
   },
   "dependencies": {
+    "@faker-js/faker": "^8.4.1",
     "@kubernetes/client-node": "^0.21.0",
     "axios": "^1.7.2",
-    "node-ssh": "^13.2.0"
+    "looks-same": "^9.0.1",
+    "node-ssh": "^13.2.0",
+    "pngjs": "7.0.0"
   }
 }

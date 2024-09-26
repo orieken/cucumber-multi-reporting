@@ -1,9 +1,9 @@
-import { chromium, firefox, webkit } from 'playwright';
+import { chromium, firefox, Page, webkit } from 'playwright';
 import { browserOptions } from './browser-options';
 import { CustomWorld } from '../../world/custom-world';
 import { ITestCaseHookParameter } from '@cucumber/cucumber/lib/support_code_library_builder/types';
 import { Browser } from 'playwright';
-import { Status } from '@cucumber/cucumber';
+import * as fs from 'node:fs';
 
 declare global {
   // eslint-disable-next-line no-var
@@ -24,47 +24,63 @@ const browsers: { [k: string]: () => Promise<Browser> } = {
 };
 
 export function createBrowser(): () => Promise<void> {
-  return async function () {
+  return async function() {
     global.browser = await browsers[process.env.BROWSER ?? 'chrome']();
   };
 }
 
 export function closeBrowser(): () => Promise<void> {
-  return async function () {
+  return async function() {
     await global.browser.close();
   };
 }
 
 export function createContext(): (this: CustomWorld, { pickle }: ITestCaseHookParameter) => Promise<void> {
-  return async function (this: CustomWorld, { pickle }: ITestCaseHookParameter) {
+  return async function(this: CustomWorld, { pickle }: ITestCaseHookParameter) {
     this.context = await global.browser.newContext({
       acceptDownloads: true,
+      recordVideo: {
+        dir: 'reports/videos/',
+        size: { width: 1280, height: 720 },
+      },
     });
 
     this.page = await this.context?.newPage();
     this.feature = pickle;
+    this.scenarioName = pickle.name.replace(/\s+/g, '_');
   };
 }
 
 async function attachScreenshot(this: CustomWorld) {
-  const image = await this.page?.screenshot();
-  image && (await this.attach(image, 'image/png'));
+  const image = await this.page.screenshot();
+  image && this.attach(image, 'image/png');
+}
+
+async function attachVideo(this: CustomWorld) {
+  const videoPath = await this.page.video()?.path() ?? '';
+
+  try {
+    await fs.promises.access(videoPath!);
+    const videoData = await fs.promises.readFile(videoPath!);
+    this.attach(videoData, 'video/mp4');
+  } catch (error) {
+    console.error('Error accessing or reading video file:', error);
+  }
 }
 
 async function createReport(this: CustomWorld, { result }: ITestCaseHookParameter) {
   if (result) {
-    await this.attach(`Status: ${result?.status}. Duration:${result.duration?.seconds}}s`);
-    if (result.status !== Status.PASSED) {
-      await attachScreenshot.call(this);
-    }
+    this.attach(`Status: ${ result?.status }. Duration:${ result.duration?.seconds }s`);
+    await attachScreenshot.call(this);
   }
 }
 
 export function closeContext(): (this: CustomWorld, hookParameter: ITestCaseHookParameter) => Promise<void> {
-  return async function (this: CustomWorld, { result }: ITestCaseHookParameter) {
+  return async function(this: CustomWorld, { result }: ITestCaseHookParameter) {
     await createReport.call(this, { result } as ITestCaseHookParameter);
 
-    await this.page?.close();
     await this.context?.close();
+    await this.page?.close();
+    await attachVideo.call(this);
   };
 }

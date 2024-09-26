@@ -112,4 +112,5 @@ out/
 # VSCode
 .vscode/
 *.code-workspace
+reports
 

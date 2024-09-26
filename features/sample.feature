@@ -8,3 +8,13 @@ Feature: Setup Works
   Scenario: Undefined steps
     Given I am not implemented
     Then I should generate a step code
+
+   @JIRA-123
+  Scenario: qwefsd
+    When I navigate to the url "https://www.google.com"
+    Then I should see the title "Google"
+
+   @JIRA-123
+  Scenario: qwe
+    When I navigate to the url "https://www.google.com"
+    Then I should see the title "abc"

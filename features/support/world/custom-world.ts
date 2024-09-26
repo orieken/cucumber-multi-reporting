@@ -6,8 +6,10 @@ import { CustomWorldOptions } from './custom-world-options';
 export class CustomWorld extends World {
   context?: BrowserContext;
   feature?: messages.Pickle;
-  page?: Page;
+  page!: Page;
   browser?: Browser;
+  scenarioName?: string;
+
   constructor(options: CustomWorldOptions) {
     super(options);
   }
