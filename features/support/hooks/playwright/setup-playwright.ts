@@ -1,4 +1,4 @@
-import { chromium, firefox, Page, webkit } from 'playwright';
+import { chromium, firefox, webkit } from 'playwright';
 import { browserOptions } from './browser-options';
 import { CustomWorld } from '../../world/custom-world';
 import { ITestCaseHookParameter } from '@cucumber/cucumber/lib/support_code_library_builder/types';
@@ -24,19 +24,19 @@ const browsers: { [k: string]: () => Promise<Browser> } = {
 };
 
 export function createBrowser(): () => Promise<void> {
-  return async function() {
+  return async function () {
     global.browser = await browsers[process.env.BROWSER ?? 'chrome']();
   };
 }
 
 export function closeBrowser(): () => Promise<void> {
-  return async function() {
+  return async function () {
     await global.browser.close();
   };
 }
 
 export function createContext(): (this: CustomWorld, { pickle }: ITestCaseHookParameter) => Promise<void> {
-  return async function(this: CustomWorld, { pickle }: ITestCaseHookParameter) {
+  return async function (this: CustomWorld, { pickle }: ITestCaseHookParameter) {
     this.context = await global.browser.newContext({
       acceptDownloads: true,
       recordVideo: {
@@ -57,7 +57,7 @@ async function attachScreenshot(this: CustomWorld) {
 }
 
 async function attachVideo(this: CustomWorld) {
-  const videoPath = await this.page.video()?.path() ?? '';
+  const videoPath = (await this.page.video()?.path()) ?? '';
 
   try {
     await fs.promises.access(videoPath!);
@@ -70,13 +70,13 @@ async function attachVideo(this: CustomWorld) {
 
 async function createReport(this: CustomWorld, { result }: ITestCaseHookParameter) {
   if (result) {
-    this.attach(`Status: ${ result?.status }. Duration:${ result.duration?.seconds }s`);
+    this.attach(`Status: ${result?.status}. Duration:${result.duration?.seconds}s`);
     await attachScreenshot.call(this);
   }
 }
 
 export function closeContext(): (this: CustomWorld, hookParameter: ITestCaseHookParameter) => Promise<void> {
-  return async function(this: CustomWorld, { result }: ITestCaseHookParameter) {
+  return async function (this: CustomWorld, { result }: ITestCaseHookParameter) {
     await createReport.call(this, { result } as ITestCaseHookParameter);
 
     await this.context?.close();
