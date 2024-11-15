@@ -5,10 +5,14 @@ const formatOptions = JSON.stringify({
 
 const timestamp = new Date().toISOString().replace(/[:-]/g, '').replace(/\..+/, '');
 
+// --format @rieken/cucumber-otel-reporter
+// --format @cucumber/pretty-formatter
 const common = `
   --require features/**/*.ts
+
   --require-module ts-node/register
-  --format @cucumber/pretty-formatter
+  --format @rieken/cucumber-otel-reporter
+  
   --format-options ${formatOptions}
   --format html:./reports/cucumber_report-${timestamp}.html
   --format json:./reports/cucumber_report-${timestamp}.json

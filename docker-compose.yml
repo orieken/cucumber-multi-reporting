@@ -1,33 +1,229 @@
-version: '3.7'
-
 services:
+  # OpenTelemetry Collector
   otel-collector:
     image: otel/opentelemetry-collector-contrib:latest
-    ports:
-      - "50051:50051"  # OTLP gRPC
-      - "50052:50052"  # OTLP HTTP
-      - "50080:8888"  # Prometheus metrics
-    command: >
-      --config=/etc/otel-collector-config.yaml
+    container_name: otel-collector
+    command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
-    depends_on:
-      - jaeger
-
-  jaeger:
-    image: jaegertracing/all-in-one:latest
-    environment:
-      COLLECTOR_ZIPKIN_HTTP_PORT: 9411
-      COLLECTOR_GRPC_SERVER_HOST_PORT: ":14250"  # Enable gRPC on default port
-      COLLECTOR_HTTP_SERVER_HOST_PORT: ":14268"  # Enable HTTP collector on default port
     ports:
-      - "50060:14250"  # Jaeger gRPC collector
-      - "50061:14268"  # Jaeger HTTP collector
-      - "16686:16686"  # Jaeger UI
+      - "50051:50051" # OTLP gRPC
+      - "50052:50052" # OTLP HTTP
+      - "50080:50080" # Prometheus metrics
+    networks:
+      - observability
+    depends_on:
+      - tempo
 
+  # Prometheus
   prometheus:
     image: prom/prometheus:latest
-    ports:
-      - "50081:9090"  # Prometheus web UI exposed on port 50081
+    container_name: prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.console.libraries=/usr/share/prometheus/console_libraries
+      - --web.console.templates=/usr/share/prometheus/consoles
+      - --web.enable-lifecycle
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "50081:9090"
+    networks:
+      - observability
+    depends_on:
+      - tempo
+
+  # Grafana
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+    ports:
+      - "3000:3000"
+    networks:
+      - observability
+    depends_on:
+      - prometheus
+      - tempo
+
+  # Tempo
+  tempo:
+    image: grafana/tempo:latest
+    container_name: tempo
+    user: root  # Run as root to ensure write permissions
+    command: ["-config.file=/etc/tempo.yaml"]
+    volumes:
+      - ./tempo.yaml:/etc/tempo.yaml
+      - tempo_data:/tmp/tempo:rw
+    ports:
+      - "50061:3200"   # Tempo HTTP query
+      - "50062:9095"   # Tempo gRPC query
+      - "50063:4317"   # OTLP gRPC
+      - "50064:4318"   # OTLP HTTP
+      - "50065:9411"   # Zipkin ingest
+    networks:
+      - observability
+
+networks:
+  observability:
+    name: observability
+    driver: bridge
+
+volumes:
+  prometheus_data:
+  grafana_data:
+  tempo_data:
+
+#services:
+#  # OpenTelemetry Collector
+#  otel-collector:
+#    image: otel/opentelemetry-collector-contrib:latest
+#    command: ["--config=/etc/otel-collector-config.yaml"]
+#    volumes:
+#      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+#    ports:
+#      - "50051:50051" # OTLP gRPC
+#      - "50052:50052" # OTLP HTTP
+#      - "50080:50080" # Prometheus metrics
+#    networks:
+#      - observability
+#
+#  # Prometheus
+#  prometheus:
+#    image: prom/prometheus:latest
+#    command:
+#      - --config.file=/etc/prometheus/prometheus.yml
+#      - --storage.tsdb.path=/prometheus
+#      - --web.console.libraries=/usr/share/prometheus/console_libraries
+#      - --web.console.templates=/usr/share/prometheus/consoles
+#    volumes:
+#      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+#      - prometheus_data:/prometheus
+#    ports:
+#      - "50081:9090"
+#    networks:
+#      - observability
+#
+#  # Grafana
+#  grafana:
+#    image: grafana/grafana:latest
+#    volumes:
+#      - grafana_data:/var/lib/grafana
+#      - ./grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yml
+#    environment:
+#      - GF_AUTH_ANONYMOUS_ENABLED=true
+#      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+#      - GF_AUTH_DISABLE_LOGIN_FORM=true
+#    ports:
+#      - "3000:3000"
+#    networks:
+#      - observability
+#
+#  # Tempo
+#  tempo:
+#    image: grafana/tempo:latest
+#    command: ["-config.file=/etc/tempo.yml"]
+#    volumes:
+#      - ./tempo.yml:/etc/tempo.yml
+#      - tempo_data:/tmp/tempo
+#    ports:
+#      - "50061:3200"   # Tempo HTTP query
+#      - "50062:9095"   # Tempo gRPC query
+#      - "50063:4317"   # OTLP gRPC
+#      - "50064:4318"   # OTLP HTTP
+#      - "50065:9411"   # Zipkin ingest
+#    networks:
+#      - observability
+#
+#networks:
+#  observability:
+#
+#volumes:
+#  prometheus_data:
+#  grafana_data:
+#  tempo_data:
+
+#version: '3.8'
+#
+#services:
+#  init:
+#    image: grafana/tempo:latest
+#    user: root
+#    entrypoint:
+#      - "chown"
+#      - "10001:10001"
+#      - "/var/tempo"
+#    volumes:
+#      - ./tempo-data:/var/tempo
+#    networks:
+#      - otel-network
+#
+#  otel-collector:
+#    image: otel/opentelemetry-collector-contrib:latest
+#    ports:
+#      - '50051:50051' # OTLP gRPC
+#      - '50052:50052' # OTLP HTTP
+#      - '50080:50080' # Prometheus metrics
+#    command: >
+#      --config=/etc/otel-collector-config.yaml
+#    volumes:
+#      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
+#    networks:
+#      - otel-network
+#
+#  prometheus:
+#    image: prom/prometheus:latest
+#    ports:
+#      - '50081:9090' # Prometheus web UI exposed on port 50081
+#    volumes:
+#      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+#    networks:
+#      - otel-network
+#
+#  grafana:
+#    image: grafana/grafana:latest
+#    ports:
+#      - "3000:3000"  # Grafana web UI on port 3000
+#    environment:
+#      - GF_SECURITY_ADMIN_USER=admin
+#      - GF_SECURITY_ADMIN_PASSWORD=admin
+#    depends_on:
+#      - prometheus
+#      - tempo
+#    volumes:
+#      - grafana-data:/var/lib/grafana
+#    networks:
+#      - otel-network
+#
+#  tempo:
+#    image: grafana/tempo:latest
+#    command: [ "-config.file=/etc/tempo.yaml" ]
+#    volumes:
+#      - ./tempo.yaml:/etc/tempo.yaml
+#      - ./tempo-data:/var/tempo
+#    ports:
+#      - "50060:14268"  # Jaeger ingest on port 50060
+#      - "50061:3200"   # Tempo HTTP query on port 50061
+#      - "50062:9095"   # Tempo gRPC query on port 50062
+#      - "50063:4317"   # OTLP gRPC on port 50063
+#      - "50064:4318"   # OTLP HTTP on port 50064
+#      - "50065:9411"   # Zipkin ingest on port 50065
+#    depends_on:
+#      - init
+#    networks:
+#      - otel-network
+#
+#networks:
+#    otel-network:
+#      driver: bridge
+#
+#volumes:
+#  grafana-data:

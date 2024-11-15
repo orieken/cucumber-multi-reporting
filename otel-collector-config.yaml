@@ -1,27 +1,57 @@
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:50051
+      http:
+        endpoint: 0.0.0.0:50052
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+
+exporters:
+  prometheus:
+    endpoint: "0.0.0.0:50080"
+  otlp:
+    endpoint: "tempo:4317"
+    tls:
+      insecure: true
+
+service:
+  pipelines:
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [prometheus]
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [otlp]
+
 #receivers:
 #  otlp:
 #    protocols:
 #      grpc:
-#        endpoint: "0.0.0.0:50051"
+#        endpoint: '0.0.0.0:50051' # gRPC on port 50051
 #      http:
-#        endpoint: "0.0.0.0:50052"
-#
+#        endpoint: '0.0.0.0:50052' # HTTP on port 50052
 #  prometheus:
 #    config:
 #      scrape_configs:
 #        - job_name: 'otel-collector-metrics'
 #          scrape_interval: 10s
 #          static_configs:
-#            - targets: ['0.0.0.0:8888']  # Collector's own metrics
+#            - targets: ['0.0.0.0:50080'] # Collector's own metrics
 #
 #exporters:
 #  otlp:
-#    endpoint: jaeger:14268
+#    endpoint: "tempo:50063"
 #    tls:
 #      insecure: true
-#
 #  prometheus:
-#    endpoint: "0.0.0.0:8888"  # Expose metrics to Prometheus
+#    endpoint: '0.0.0.0:50080' # Expose Prometheus metrics on port 50080
 #
 #service:
 #  pipelines:
@@ -31,36 +61,3 @@
 #    metrics:
 #      receivers: [prometheus]
 #      exporters: [prometheus]
-#
-
-receivers:
-  otlp:
-    protocols:
-      grpc:
-        endpoint: "0.0.0.0:50051"  # gRPC on port 50051
-      http:
-        endpoint: "0.0.0.0:50052"  # HTTP on port 50052
-  prometheus:
-    config:
-      scrape_configs:
-        - job_name: 'otel-collector-metrics'
-          scrape_interval: 10s
-          static_configs:
-            - targets: ['0.0.0.0:8888']  # Collector's own metrics
-
-exporters:
-  otlp:
-      endpoint:  jaeger:14268
-      tls:
-        insecure: true
-  prometheus:
-    endpoint: "0.0.0.0:50080"  # Expose Prometheus metrics on port 50080
-
-service:
-  pipelines:
-    traces:
-      receivers: [otlp]
-      exporters: [otlp]
-    metrics:
-      receivers: [prometheus]
-      exporters: [prometheus]

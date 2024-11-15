@@ -6,13 +6,13 @@ import looksSame from 'looks-same';
 
 setDefaultTimeout(600 * 10000);
 
-When('I navigate to the url {string}', async function(this: CustomWorld, url: string) {
+When('I navigate to the url {string}', async function (this: CustomWorld, url: string) {
   const page: Page = this.page as Page;
 
   await page.goto(url);
 });
 
-Then('I should see the title {string}', async function(this: CustomWorld, pageTitle: string) {
+Then('I should see the title {string}', async function (this: CustomWorld, pageTitle: string) {
   const page: Page = this.page as Page;
 
   await expect(page.title()).resolves.toEqual(pageTitle);
@@ -21,23 +21,23 @@ Then('I should see the title {string}', async function(this: CustomWorld, pageTi
 let beforeScreenshot: Buffer;
 let afterScreenshot: Buffer;
 
-Given('I take a before screenshot', async function(this: CustomWorld) {
+Given('I take a before screenshot', async function (this: CustomWorld) {
   beforeScreenshot = await this.page.screenshot();
   this.attach(beforeScreenshot, 'image/png');
 });
 
-Given('I set the search', async function(this: CustomWorld) {
+Given('I set the search', async function (this: CustomWorld) {
   const { page } = this as CustomWorld;
   await page.getByLabel('Search', { exact: true }).click();
   await page.getByLabel('Search', { exact: true }).fill('abc');
 });
 
-Given('I take an after screenshot', async function(this: CustomWorld) {
+Given('I take an after screenshot', async function (this: CustomWorld) {
   afterScreenshot = await this.page.screenshot();
   this.attach(afterScreenshot, 'image/png');
 });
 
-Then('the page should look the same', async function(this: CustomWorld) {
+Then('the page should look the same', async function (this: CustomWorld) {
   const { equal } = await looksSame(beforeScreenshot, afterScreenshot, { ignoreCaret: true });
   const buffer = await looksSame.createDiff({
     reference: beforeScreenshot,
@@ -53,4 +53,12 @@ Then('the page should look the same', async function(this: CustomWorld) {
   this.attach(buffer, 'image/png');
 
   expect(equal).toBeTruthy();
+});
+
+Then('I should not be executed', async function (this: CustomWorld) {
+  return 'pending';
+});
+
+When('I navigate to the skipped site', async function (this: CustomWorld) {
+  return 'pending';
 });
