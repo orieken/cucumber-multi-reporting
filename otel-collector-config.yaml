@@ -13,9 +13,9 @@ processors:
 
 exporters:
   prometheus:
-    endpoint: "0.0.0.0:50080"
+    endpoint: '0.0.0.0:50080'
   otlp:
-    endpoint: "tempo:4317"
+    endpoint: 'tempo:4317'
     tls:
       insecure: true
 
@@ -29,7 +29,6 @@ service:
       receivers: [otlp]
       processors: [batch]
       exporters: [otlp]
-
 #receivers:
 #  otlp:
 #    protocols:

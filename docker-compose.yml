@@ -3,13 +3,13 @@ services:
   otel-collector:
     image: otel/opentelemetry-collector-contrib:latest
     container_name: otel-collector
-    command: ["--config=/etc/otel-collector-config.yaml"]
+    command: ['--config=/etc/otel-collector-config.yaml']
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml
     ports:
-      - "50051:50051" # OTLP gRPC
-      - "50052:50052" # OTLP HTTP
-      - "50080:50080" # Prometheus metrics
+      - '50051:50051' # OTLP gRPC
+      - '50052:50052' # OTLP HTTP
+      - '50080:50080' # Prometheus metrics
     networks:
       - observability
     depends_on:
@@ -29,7 +29,7 @@ services:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
       - prometheus_data:/prometheus
     ports:
-      - "50081:9090"
+      - '50081:9090'
     networks:
       - observability
     depends_on:
@@ -47,7 +47,7 @@ services:
       - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
       - GF_AUTH_DISABLE_LOGIN_FORM=true
     ports:
-      - "3000:3000"
+      - '3000:3000'
     networks:
       - observability
     depends_on:
@@ -58,17 +58,17 @@ services:
   tempo:
     image: grafana/tempo:latest
     container_name: tempo
-    user: root  # Run as root to ensure write permissions
-    command: ["-config.file=/etc/tempo.yaml"]
+    user: root # Run as root to ensure write permissions
+    command: ['-config.file=/etc/tempo.yaml']
     volumes:
       - ./tempo.yaml:/etc/tempo.yaml
       - tempo_data:/tmp/tempo:rw
     ports:
-      - "50061:3200"   # Tempo HTTP query
-      - "50062:9095"   # Tempo gRPC query
-      - "50063:4317"   # OTLP gRPC
-      - "50064:4318"   # OTLP HTTP
-      - "50065:9411"   # Zipkin ingest
+      - '50061:3200' # Tempo HTTP query
+      - '50062:9095' # Tempo gRPC query
+      - '50063:4317' # OTLP gRPC
+      - '50064:4318' # OTLP HTTP
+      - '50065:9411' # Zipkin ingest
     networks:
       - observability
 
@@ -81,7 +81,6 @@ volumes:
   prometheus_data:
   grafana_data:
   tempo_data:
-
 #services:
 #  # OpenTelemetry Collector
 #  otel-collector:

@@ -20,8 +20,6 @@ scrape_configs:
       - source_labels: [__name__]
         regex: 'tempo_.*'
         action: keep
-
-
 #global:
 #  scrape_interval: 30s # Scrape every 15 seconds
 #  evaluation_interval: 30s

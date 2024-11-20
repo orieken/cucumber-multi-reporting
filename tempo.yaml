@@ -18,15 +18,15 @@ distributor:
     otlp:
       protocols:
         grpc:
-          endpoint: "0.0.0.0:4317"
+          endpoint: '0.0.0.0:4317'
         http:
-          endpoint: "0.0.0.0:4318"
+          endpoint: '0.0.0.0:4318'
     jaeger:
       protocols:
         thrift_http:
-          endpoint: "0.0.0.0:14268"
+          endpoint: '0.0.0.0:14268'
     zipkin:
-      endpoint: "0.0.0.0:9411"
+      endpoint: '0.0.0.0:9411'
 
 storage:
   trace:
@@ -37,8 +37,6 @@ storage:
 compactor:
   compaction:
     block_retention: 48h
-
-
 #server:
 #  http_listen_port: 3200
 #  grpc_listen_port: 9095
